@@ -6,6 +6,15 @@
 //   NAVER_CLIENT_SECRET
 
 export default async function handler(req, res) {
+  // CORS 허용: 프로토타입/서비스 화면(다른 출처)에서 이 API를 호출할 수 있도록 설정
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
   // 우리 프론트엔드(브라우저)에서만 호출 가능하도록 GET만 허용
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'GET 요청만 허용됩니다.' });
