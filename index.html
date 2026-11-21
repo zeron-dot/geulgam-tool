@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>글감 검색기 · 블로그·인스타 키워드 한 번에</title>
+<meta name="description" content="키워드 하나로 네이버 월간 검색수(PC·모바일·합계·경쟁도)와 블로그 상위 노출 10건을 한눈에 확인하는 글감 검색기.">
+<meta name="theme-color" content="#0f766e">
+<meta property="og:title" content="글감 검색기">
+<meta property="og:description" content="키워드 하나로 검색량과 블로그 상위 노출을 한 번에 확인.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%230f766e'/%3E%3Ctext x='32' y='45' font-size='36' font-family='sans-serif' font-weight='700' text-anchor='middle' fill='%23fff'%3E%E1%84%80%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+:root{
+  --bg:#f6f4f0;
+  --card:#ffffff;
+  --ink:#1b1a18;
+  --ink-2:#43403c;
+  --muted:#7b766e;
+  --line:#e7e2da;
+  --line-2:#f0ece5;
+  --accent:#0f766e;
+  --accent-soft:#e6f2ef;
+  --accent-ink:#0b5d57;
+  --warm:#c2410c;
+  --hi-bg:#fdeceb; --hi-ink:#b42318;
+  --mid-bg:#fdf2e2; --mid-ink:#a2570a;
+  --low-bg:#e8f3ea; --low-ink:#256b3a;
+  --radius:16px;
+  --shadow:0 1px 2px rgba(28,25,20,.04), 0 8px 24px -16px rgba(28,25,20,.18);
+}
+*{box-sizing:border-box}
+[hidden]{display:none !important}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic","Helvetica Neue",Arial,sans-serif;
+  font-size:16px;
+  line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+  letter-spacing:-0.01em;
+}
+.wrap{max-width:1080px;margin:0 auto;padding:0 18px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+a{color:inherit}
+button{font:inherit;color:inherit}
+
+/* header */
+.top{padding:28px 0 6px}
+.brand{display:flex;align-items:center;gap:12px}
+.mark{
+  width:42px;height:42px;flex:0 0 42px;border-radius:13px;
+  background:linear-gradient(160deg,#12968b,#0b5d57);
+  color:#fff;font-weight:800;font-size:19px;
+  display:grid;place-items:center;letter-spacing:0;
+  box-shadow:0 6px 16px -8px rgba(15,118,110,.7);
+}
+.brand h1{margin:0;font-size:20px;font-weight:800;letter-spacing:-0.03em}
+.brand p{margin:1px 0 0;font-size:12.5px;color:var(--muted);letter-spacing:-0.005em}
+.handle{margin-left:auto;font-size:12px;color:var(--muted);white-space:nowrap;display:none}
+@media(min-width:640px){.handle{display:block}}
+
+/* search */
+.sticky{
+  position:sticky;top:0;z-index:30;
+  padding:12px 0 10px;
+  background:rgba(246,244,240,.82);
+  -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+  border-bottom:1px solid transparent;
+  transition:border-color .2s ease, box-shadow .2s ease;
+}
+.sticky.stuck{border-bottom-color:var(--line-2)}
+form.search{display:flex;gap:8px;align-items:stretch}
+.field{
+  position:relative;flex:1;display:flex;align-items:center;
+  background:var(--card);border:1.5px solid var(--line);
+  border-radius:14px;box-shadow:var(--shadow);
+  transition:border-color .15s ease, box-shadow .15s ease;
+}
+.field:focus-within{border-color:var(--accent);box-shadow:0 0 0 4px rgba(15,118,110,.10)}
+.field svg.ico{position:absolute;left:13px;width:18px;height:18px;stroke:var(--muted);fill:none;stroke-width:2;pointer-events:none}
+#q{
+  flex:1;min-width:0;border:0;background:transparent;outline:none;
+  padding:14px 40px 14px 39px;font-size:16px;font-weight:500;color:var(--ink);
+  border-radius:14px;letter-spacing:-0.01em;
+}
+#q::placeholder{color:#a8a29a;font-weight:400}
+#q::-webkit-search-cancel-button{display:none}
+.clear{
+  position:absolute;right:8px;width:26px;height:26px;border:0;border-radius:50%;
+  background:#efebe4;color:#7b766e;font-size:15px;line-height:1;display:grid;place-items:center;cursor:pointer;
+}
+.clear:hover{background:#e5e0d7}
+.go{
+  flex:0 0 auto;border:0;border-radius:14px;padding:0 20px;cursor:pointer;
+  background:var(--accent);color:#fff;font-weight:700;font-size:15px;letter-spacing:-0.01em;
+  box-shadow:0 6px 16px -10px rgba(15,118,110,.9);
+  transition:background .15s ease, transform .06s ease;
+}
+.go:hover{background:var(--accent-ink)}
+.go:active{transform:translateY(1px)}
+.go[disabled]{opacity:.55;cursor:default}
+@media(max-width:420px){.go{padding:0 16px;font-size:14.5px}}
+
+/* chips */
+.chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:10px 0 0;font-size:12.5px;color:var(--muted)}
+.chips .lbl{font-weight:600;color:#8d8780;margin-right:2px}
+.chip{
+  border:1px solid var(--line);background:#fbfaf8;border-radius:999px;
+  padding:5px 11px;font-size:12.5px;color:var(--ink-2);cursor:pointer;
+  transition:border-color .15s ease,color .15s ease,background .15s ease;
+}
+.chip:hover{border-color:#cfe0dc;color:var(--accent-ink);background:var(--accent-soft)}
+.chip .x{margin-left:5px;color:#b3ada4;font-size:11px}
+.chip.clearall{border-style:dashed;color:#9b958c}
+
+/* layout */
+main{padding-bottom:56px}
+.grid{display:grid;gap:14px;margin-top:16px}
+@media(min-width:900px){
+  .grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:start;gap:18px}
+}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+.card-head{display:flex;align-items:center;gap:8px;padding:15px 17px 0}
+.card-head h2{margin:0;font-size:14.5px;font-weight:800;letter-spacing:-0.02em}
+.card-head .src{font-size:11.5px;color:var(--muted);border:1px solid var(--line-2);background:#faf8f5;border-radius:6px;padding:2px 7px;font-weight:500}
+.card-head .spacer{margin-left:auto}
+.ext{font-size:11.5px;color:var(--muted);text-decoration:none;border-bottom:1px solid transparent;padding-bottom:1px;white-space:nowrap}
+.ext:hover{color:var(--accent-ink);border-bottom-color:#cfe0dc}
+.card-body{padding:14px 17px 17px}
+
+/* hero stat */
+.hero{
+  background:linear-gradient(158deg,#f2f8f6,#fbfaf7 62%);
+  border:1px solid #e3efeb;border-radius:13px;padding:14px 15px 13px;
+}
+.hero .label{display:block;font-size:12px;color:#5f7a74;font-weight:600}
+.hero .label b{color:var(--ink);font-weight:700}
+.hero .num{display:flex;align-items:baseline;gap:4px;margin-top:2px}
+.hero .num strong{font-size:32px;font-weight:800;letter-spacing:-0.04em;line-height:1.15;font-variant-numeric:tabular-nums}
+.hero .num i{font-style:normal;font-size:13px;color:var(--muted);font-weight:600}
+.hero .num .approx{font-size:15px;font-weight:700;color:var(--muted);margin-right:-2px}
+.split{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;margin-top:10px}
+.split .cell{background:#fff;border:1px solid var(--line-2);border-radius:10px;padding:8px 10px}
+.split .cell span{display:block;font-size:11px;color:var(--muted);font-weight:600}
+.split .cell b{font-size:15px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-0.02em}
+.split .cell.comp{background:transparent;border:0;padding:8px 2px 8px 4px;text-align:right}
+.split .cell.comp span{margin-bottom:3px}
+.ratio{display:flex;align-items:center;gap:8px;margin-top:10px}
+.ratio .bar{flex:1;height:6px;border-radius:99px;background:#e9eeec;overflow:hidden}
+.ratio .bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#5fbfa8,#0f766e)}
+.ratio em{font-style:normal;font-size:11px;color:var(--muted);font-weight:600;white-space:nowrap}
+
+/* badges */
+.badge{display:inline-block;font-size:11.5px;font-weight:700;border-radius:7px;padding:2px 7px;line-height:1.5;letter-spacing:-0.01em;white-space:nowrap}
+.b-high{background:var(--hi-bg);color:var(--hi-ink)}
+.b-mid{background:var(--mid-bg);color:var(--mid-ink)}
+.b-low{background:var(--low-bg);color:var(--low-ink)}
+.b-none{background:#f1efea;color:#8d8780}
+
+/* keyword list */
+.list-head{display:flex;align-items:center;margin:18px 0 6px}
+.list-head h3{margin:0;font-size:12.5px;font-weight:700;color:var(--ink-2)}
+.list-head .count{color:var(--muted);font-weight:500;margin-left:5px;font-variant-numeric:tabular-nums}
+.seg{margin-left:auto;display:flex;background:#f2efe9;border-radius:9px;padding:2px}
+.seg button{border:0;background:transparent;font-size:11.5px;font-weight:600;color:#8b857c;padding:4px 9px;border-radius:7px;cursor:pointer;letter-spacing:-0.01em}
+.seg button.on{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(28,25,20,.10)}
+.kw-list{list-style:none;margin:0;padding:0}
+.kw{
+  display:flex;align-items:center;gap:10px;width:100%;
+  padding:9px 8px;margin:0 -8px;border-radius:10px;cursor:pointer;
+  border-top:1px solid var(--line-2);
+  transition:background .12s ease;
+}
+.kw-list li:first-child .kw{border-top:0}
+.kw:hover{background:#faf8f5}
+.kw .name{flex:1;min-width:0;font-size:13.5px;font-weight:600;color:var(--ink);letter-spacing:-0.015em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kw .name .me{font-size:10.5px;font-weight:700;color:var(--accent-ink);background:var(--accent-soft);border-radius:5px;padding:1px 5px;margin-left:5px;vertical-align:1px}
+.kw .nums{text-align:right;flex:0 0 auto;line-height:1.35}
+.kw .nums b{display:block;font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-0.02em}
+.kw .nums span{display:block;font-size:10.5px;color:#9b958c;font-variant-numeric:tabular-nums;letter-spacing:-0.01em}
+.kw .badge{flex:0 0 auto;min-width:34px;text-align:center}
+@media(max-width:380px){.kw .nums span{font-size:10px}}
+
+/* blog list */
+.blog-sum{font-size:12px;color:var(--muted);margin:0 0 10px}
+.blog-sum b{color:var(--ink);font-weight:700;font-variant-numeric:tabular-nums}
+.blog-list{list-style:none;margin:0;padding:0}
+.post{display:flex;gap:10px;padding:13px 0;border-top:1px solid var(--line-2)}
+.post:first-child{border-top:0;padding-top:2px}
+.rank{flex:0 0 20px;font-size:11.5px;font-weight:700;color:#b3ada4;font-variant-numeric:tabular-nums;padding-top:2px;text-align:center}
+.post:nth-child(-n+3) .rank{color:var(--accent)}
+.post .body{min-width:0;flex:1}
+.post a.title{display:block;font-size:13.5px;font-weight:700;line-height:1.45;color:var(--ink);text-decoration:none;letter-spacing:-0.02em;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.post a.title:hover{color:var(--accent-ink);text-decoration:underline;text-underline-offset:2px}
+.post .desc{margin:3px 0 0;font-size:12px;line-height:1.55;color:#726d66;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.post .meta{display:flex;align-items:center;gap:6px;margin-top:6px;font-size:11px;color:#9b958c}
+.post .meta .dash{color:#cfc9c0}
+.post .meta .copy{
+  margin-left:auto;border:1px solid var(--line);background:#fbfaf8;border-radius:7px;
+  font-size:10.5px;font-weight:600;color:#8b857c;padding:2px 7px;cursor:pointer;white-space:nowrap;
+}
+.post .meta .copy:hover{border-color:#cfe0dc;color:var(--accent-ink);background:var(--accent-soft)}
+.post .meta .copy.done{border-color:#cfe0dc;color:var(--accent-ink);background:var(--accent-soft)}
+
+/* states */
+.sk{border-radius:8px;background:linear-gradient(100deg,#f1eee8 30%,#f8f6f2 45%,#f1eee8 60%);background-size:220% 100%;animation:sh 1.15s linear infinite}
+@keyframes sh{from{background-position:120% 0}to{background-position:-20% 0}}
+.sk-h{height:58px;margin-bottom:12px}
+.sk-row{height:34px;margin-top:8px}
+.sk-post{height:52px;margin-bottom:10px}
+.err{display:flex;gap:10px;align-items:flex-start;background:#fdf3f2;border:1px solid #f6dcda;border-radius:12px;padding:12px 13px}
+.err .ico{flex:0 0 18px;width:18px;height:18px;border-radius:50%;background:#f2c9c5;color:#8f2d22;font-size:12px;font-weight:800;display:grid;place-items:center;margin-top:1px}
+.err p{margin:0;font-size:12.5px;color:#8f3a2e;line-height:1.5;word-break:break-word}
+.err .retry{margin-top:8px;border:1px solid #e8c4c0;background:#fff;border-radius:8px;padding:4px 10px;font-size:11.5px;font-weight:700;color:#8f3a2e;cursor:pointer}
+.err .retry:hover{background:#fbe9e7}
+.note{font-size:11.5px;color:#a8a29a;margin:12px 0 0;line-height:1.6}
+
+/* first-run guide */
+.guide{margin-top:20px}
+.guide h2{margin:0 0 4px;font-size:15px;font-weight:800;letter-spacing:-0.02em}
+.guide p{margin:0 0 14px;font-size:13px;color:var(--muted);line-height:1.6}
+.try{display:grid;gap:8px}
+@media(min-width:600px){.try{grid-template-columns:1fr 1fr}}
+.try button{
+  display:flex;align-items:center;gap:10px;text-align:left;
+  border:1px solid var(--line);background:var(--card);border-radius:12px;padding:11px 13px;cursor:pointer;
+  box-shadow:0 1px 2px rgba(28,25,20,.03);transition:border-color .15s ease,transform .06s ease;
+}
+.try button:hover{border-color:#cfe0dc;transform:translateY(-1px)}
+.try .t-ico{flex:0 0 30px;width:30px;height:30px;border-radius:9px;background:var(--accent-soft);color:var(--accent-ink);display:grid;place-items:center;font-size:13px;font-weight:800}
+.try b{display:block;font-size:13px;font-weight:700;letter-spacing:-0.02em}
+.try span.s{display:block;font-size:11.5px;color:var(--muted)}
+.tips{margin:18px 0 0;padding:14px 15px;background:#fbfaf7;border:1px solid var(--line-2);border-radius:12px;font-size:12px;color:#726d66;line-height:1.7}
+.tips b{color:var(--ink-2)}
+
+footer{border-top:1px solid var(--line-2);padding:18px 0 40px;font-size:11.5px;color:#a8a29a;line-height:1.7}
+footer a{color:#8b857c;text-decoration:none;border-bottom:1px solid #ddd7ce}
+footer a:hover{color:var(--accent-ink)}
+
+.toast{
+  position:fixed;left:50%;bottom:max(22px,env(safe-area-inset-bottom));transform:translate(-50%,14px);
+  background:#26241f;color:#fff;font-size:12.5px;font-weight:600;padding:9px 15px;border-radius:999px;
+  box-shadow:0 10px 30px -10px rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:opacity .18s ease,transform .18s ease;z-index:80;
+}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <div class="mark" aria-hidden="true">글</div>
+      <div>
+        <h1>글감 검색기</h1>
+        <p>키워드 하나로 검색량과 블로그 상위 노출을 한 번에</p>
+      </div>
+      <span class="handle">@doldori.mom</span>
+    </div>
+  </header>
+
+  <div class="sticky" id="stickyBar">
+    <form class="search" id="searchForm" role="search" novalidate>
+      <div class="field">
+        <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/></svg>
+        <label class="sr-only" for="q">검색할 키워드</label>
+        <input id="q" name="q" type="search" placeholder="키워드를 입력하세요 (예: 돌아기 이유식)" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search" maxlength="60">
+        <button type="button" class="clear" id="clearBtn" aria-label="입력 지우기" hidden>&times;</button>
+      </div>
+      <button type="submit" class="go" id="goBtn">검색</button>
+    </form>
+    <div class="chips" id="chips" aria-live="polite"></div>
+  </div>
+
+  <main>
+    <section class="guide" id="guide">
+      <h2>어떤 글감이 궁금하세요?</h2>
+      <p>키워드를 넣으면 네이버 검색광고의 월간 검색수와, 그 키워드로 상위에 뜬 블로그 글을 같이 보여드려요.</p>
+      <div class="try">
+        <button type="button" data-try="돌아기 이유식"><span class="t-ico">1</span><span><b>돌아기 이유식</b><span class="s">육아 · 레시피 글감 찾기</span></span></button>
+        <button type="button" data-try="평택 아기랑 갈만한 곳"><span class="t-ico">2</span><span><b>평택 아기랑 갈만한 곳</b><span class="s">지역 · 나들이 글감 찾기</span></span></button>
+        <button type="button" data-try="산후 다이어트"><span class="t-ico">3</span><span><b>산후 다이어트</b><span class="s">경쟁도부터 확인하기</span></span></button>
+        <button type="button" data-try="6개월 아기 간식"><span class="t-ico">4</span><span><b>6개월 아기 간식</b><span class="s">검색량 큰 키워드 파헤치기</span></span></button>
+      </div>
+      <p class="tips"><b>읽는 법</b> · 합계가 크고 경쟁도가 낮은 칸이 노리기 좋은 글감이에요. 연관 키워드를 누르면 그 키워드로 바로 다시 검색돼요.</p>
+    </section>
+
+    <section class="grid" id="results" hidden aria-live="polite">
+      <article class="card" id="adCard">
+        <div class="card-head">
+          <h2>월간 검색수</h2>
+          <span class="src">네이버 검색광고</span>
+          <span class="spacer"></span>
+          <a class="ext" id="adLink" href="https://searchad.naver.com" target="_blank" rel="noopener noreferrer">키워드도구</a>
+        </div>
+        <div class="card-body" id="adBody"></div>
+      </article>
+
+      <article class="card" id="blogCard">
+        <div class="card-head">
+          <h2>블로그 상위 노출</h2>
+          <span class="src">네이버 블로그</span>
+          <span class="spacer"></span>
+          <a class="ext" id="blogLink" href="https://search.naver.com" target="_blank" rel="noopener noreferrer">네이버에서 보기</a>
+        </div>
+        <div class="card-body" id="blogBody"></div>
+      </article>
+    </section>
+  </main>
+
+  <footer>
+    검색량은 네이버 검색광고 월간 검색수(최근 30일 기준), 블로그 결과는 네이버 블로그 검색 상위 10건이에요.<br>
+    글감 검색기 · 돌도리맘의 글감 툴
+  </footer>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var input = $('#q');
+  var form = $('#searchForm');
+  var goBtn = $('#goBtn');
+  var clearBtn = $('#clearBtn');
+  var chipsEl = $('#chips');
+  var guide = $('#guide');
+  var results = $('#results');
+  var adBody = $('#adBody');
+  var blogBody = $('#blogBody');
+  var toastEl = $('#toast');
+  var RECENT_KEY = 'geulgam.recent.v1';
+  var EXAMPLES = ['돌아기 이유식', '평택 아기랑 갈만한 곳', '산후 다이어트', '6개월 아기 간식'];
+
+  var state = {
+    q: '',
+    ad: null, blog: null,
+    adErr: null, blogErr: null,
+    adLoading: false, blogLoading: false,
+    adSort: 'rel', blogSort: 'sim'
+  };
+
+  /* ---------- helpers ---------- */
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function fmt(n) { return Number(n).toLocaleString('ko-KR'); }
+  function compact(n) {
+    n = Number(n) || 0;
+    if (n >= 100000) return fmt(Math.round(n / 10000)) + '만';
+    if (n >= 10000) return (n / 10000).toFixed(1).replace(/\.0$/, '') + '만';
+    return fmt(n);
+  }
+  function norm(s) { return String(s == null ? '' : s).replace(/\s+/g, ' ').trim(); }
+  function keyOf(s) { return norm(s).replace(/\s+/g, '').toLowerCase(); }
+
+  // 검색광고 응답의 "< 10" 같은 값을 숫자로
+  function searchNum(v) {
+    if (typeof v === 'number' && isFinite(v)) return { n: v, low: false };
+    var s = String(v == null ? '' : v).trim();
+    if (!s) return { n: 0, low: true };
+    var low = s.indexOf('<') !== -1 || /미만/.test(s);
+    var m = s.match(/\d[\d,]*/);
+    var n = m ? parseInt(m[0].replace(/,/g, ''), 10) : 0;
+    if (!isFinite(n)) n = 0;
+    return { n: n, low: low };
+  }
+  function sumOf(pc, mo) {
+    var t = pc.n + mo.n;
+    return (pc.low || mo.low) ? { n: t, low: true } : { n: t, low: false };
+  }
+  function totalText(t) { return (t.low ? '약 ' : '') + fmt(t.n); }
+
+  function compClass(c) {
+    var s = String(c == null ? '' : c).trim();
+    if (s === '높음') return 'b-high';
+    if (s === '중간') return 'b-mid';
+    if (s === '낮음') return 'b-low';
+    return 'b-none';
+  }
+  function compLabel(c) {
+    var s = String(c == null ? '' : c).trim();
+    return (s === '높음' || s === '중간' || s === '낮음') ? s : '—';
+  }
+  function formatDate(d) {
+    var s = String(d == null ? '' : d).replace(/[^0-9]/g, '');
+    if (s.length === 8) return s.slice(0, 4) + '.' + s.slice(4, 6) + '.' + s.slice(6, 8);
+    return String(d == null ? '' : d);
+  }
+
+  var toastTimer = null;
+  function toast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add('on');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toastEl.classList.remove('on'); }, 2200);
+  }
+
+  function copyText(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      return navigator.clipboard.writeText(text);
+    }
+    return new Promise(function (resolve, reject) {
+      try {
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        ta.setAttribute('readonly', '');
+        ta.style.position = 'fixed';
+        ta.style.top = '-1000px';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        resolve();
+      } catch (e) { reject(e); }
+    });
+  }
+
+  /* ---------- recent keywords ---------- */
+  function loadRecent() {
+    try {
+      var raw = localStorage.getItem(RECENT_KEY);
+      var arr = raw ? JSON.parse(raw) : [];
+      return Array.isArray(arr) ? arr.filter(function (x) { return typeof x === 'string' && x; }).slice(0, 8) : [];
+    } catch (e) { return []; }
+  }
+  function saveRecent(q) {
+    var arr = loadRecent().filter(function (x) { return keyOf(x) !== keyOf(q); });
+    arr.unshift(q);
+    try { localStorage.setItem(RECENT_KEY, JSON.stringify(arr.slice(0, 8))); } catch (e) {}
+  }
+  function removeRecent(q) {
+    var arr = loadRecent().filter(function (x) { return keyOf(x) !== keyOf(q); });
+    try { localStorage.setItem(RECENT_KEY, JSON.stringify(arr)); } catch (e) {}
+    renderChips();
+  }
+  function clearRecent() {
+    try { localStorage.removeItem(RECENT_KEY); } catch (e) {}
+    renderChips();
+    toast('최근 검색어를 지웠어요');
+  }
+
+  function renderChips() {
+    var recent = loadRecent();
+    var html = '';
+    if (recent.length) {
+      html += '<span class="lbl">최근</span>';
+      html += recent.map(function (k) {
+        return '<button type="button" class="chip" data-kw="' + esc(k) + '">' + esc(k) +
+          '<span class="x" data-remove="' + esc(k) + '" role="button" aria-label="' + esc(k) + ' 지우기">&times;</span></button>';
+      }).join('');
+      html += '<button type="button" class="chip clearall" data-clearall="1">전체 지우기</button>';
+    } else {
+      html += '<span class="lbl">이런 키워드 어때요</span>';
+      html += EXAMPLES.map(function (k) {
+        return '<button type="button" class="chip" data-kw="' + esc(k) + '">' + esc(k) + '</button>';
+      }).join('');
+    }
+    chipsEl.innerHTML = html;
+  }
+
+  /* ---------- render: keyword card ---------- */
+  function adSkeleton() {
+    return '<div class="sk sk-h"></div><div class="sk sk-row"></div><div class="sk sk-row"></div>' +
+      '<div class="sk sk-row"></div><div class="sk sk-row"></div><div class="sk sk-row"></div>';
+  }
+  function blogSkeleton() {
+    return '<div class="sk sk-h" style="height:18px;width:45%"></div>' +
+      '<div class="sk sk-post"></div><div class="sk sk-post"></div><div class="sk sk-post"></div>' +
+      '<div class="sk sk-post"></div><div class="sk sk-post"></div>';
+  }
+  function errBlock(msg, kind) {
+    return '<div class="err"><span class="ico" aria-hidden="true">!</span><div><p>' + esc(msg) + '</p>' +
+      '<button type="button" class="retry" data-retry="' + kind + '">다시 시도</button></div></div>';
+  }
+
+  function renderAd() {
+    if (state.adLoading) { adBody.innerHTML = adSkeleton(); return; }
+    if (state.adErr) { adBody.innerHTML = errBlock(state.adErr, 'ad'); return; }
+    if (!state.ad) { adBody.innerHTML = ''; return; }
+
+    var items = (state.ad.items || []).map(function (it) {
+      var pc = searchNum(it.pcSearch);
+      var mo = searchNum(it.mobileSearch);
+      var t = sumOf(pc, mo);
+      return {
+        keyword: String(it.keyword || '').trim(),
+        pc: pc, mo: mo, total: t,
+        competition: it.competition,
+        main: keyOf(it.keyword) === keyOf(state.ad.keyword || state.q)
+      };
+    }).filter(function (x) { return x.keyword; });
+
+    if (!items.length) {
+      adBody.innerHTML = '<div class="err" style="background:#fbfaf7;border-color:var(--line-2)"><span class="ico" style="background:#ece8e1;color:#8d8780">i</span><div><p style="color:#726d66">이 키워드의 연관 검색량을 찾지 못했어요. 다른 키워드로 확인해 보세요.</p></div></div>';
+      return;
+    }
+
+    var main = items.filter(function (x) { return x.main; })[0] || items[0];
+    var moRatio = main.total.n > 0 ? Math.round(main.mo.n / main.total.n * 100) : 0;
+
+    var list = items.slice();
+    if (state.adSort === 'vol') {
+      list.sort(function (a, b) { return b.total.n - a.total.n; });
+    } else {
+      // 관련도순: API 순서 유지, 대표 키워드는 맨 위
+      list.sort(function (a, b) { return (b.main ? 1 : 0) - (a.main ? 1 : 0); });
+    }
+
+    var rows = list.map(function (x) {
+      return '<li><div class="kw" data-kw="' + esc(x.keyword) + '" role="button" tabindex="0" title="이 키워드로 다시 검색">' +
+        '<span class="name">' + esc(x.keyword) + (x.main ? '<span class="me">내 키워드</span>' : '') + '</span>' +
+        '<span class="nums"><b>' + compact(x.total.n) + '</b>' +
+        '<span>PC ' + fmt(x.pc.n) + ' · 모바일 ' + fmt(x.mo.n) + '</span></span>' +
+        '<span class="badge ' + compClass(x.competition) + '">' + esc(compLabel(x.competition)) + '</span>' +
+        '</div></li>';
+    }).join('');
+
+    adBody.innerHTML =
+      '<div class="hero">' +
+        '<span class="label"><b>' + esc(main.keyword) + '</b> 월간 검색 합계</span>' +
+        '<div class="num">' + (main.total.low ? '<span class="approx">약</span>' : '') +
+          '<strong>' + fmt(main.total.n) + '</strong><i>회</i></div>' +
+        '<div class="split">' +
+          '<div class="cell"><span>PC</span><b>' + (main.pc.low ? '10 미만' : fmt(main.pc.n)) + '</b></div>' +
+          '<div class="cell"><span>모바일</span><b>' + (main.mo.low ? '10 미만' : fmt(main.mo.n)) + '</b></div>' +
+          '<div class="cell comp"><span>경쟁도</span><span class="badge ' + compClass(main.competition) + '">' + esc(compLabel(main.competition)) + '</span></div>' +
+        '</div>' +
+        '<div class="ratio"><div class="bar"><i style="width:' + moRatio + '%"></i></div><em>모바일 ' + moRatio + '%</em></div>' +
+      '</div>' +
+      '<div class="list-head"><h3>연관 키워드<span class="count">' + items.length + '</span></h3>' +
+        '<div class="seg" role="group" aria-label="정렬">' +
+          '<button type="button" data-ad-sort="rel" class="' + (state.adSort === 'rel' ? 'on' : '') + '">관련도순</button>' +
+          '<button type="button" data-ad-sort="vol" class="' + (state.adSort === 'vol' ? 'on' : '') + '">검색량순</button>' +
+        '</div>' +
+      '</div>' +
+      '<ul class="kw-list">' + rows + '</ul>' +
+      '<p class="note">10 미만 값은 10으로 계산해 합계를 냈어요. 키워드를 누르면 그 키워드로 다시 검색합니다.</p>';
+  }
+
+  /* ---------- render: blog card ---------- */
+  function renderBlog() {
+    if (state.blogLoading) { blogBody.innerHTML = blogSkeleton(); return; }
+    if (state.blogErr) { blogBody.innerHTML = errBlock(state.blogErr, 'blog'); return; }
+    if (!state.blog) { blogBody.innerHTML = ''; return; }
+
+    var items = (state.blog.items || []).slice();
+    if (!items.length) {
+      blogBody.innerHTML = '<div class="err" style="background:#fbfaf7;border-color:var(--line-2)"><span class="ico" style="background:#ece8e1;color:#8d8780">i</span><div><p style="color:#726d66">상위 블로그 글이 없어요. 키워드를 바꿔 보세요.</p></div></div>';
+      return;
+    }
+    if (state.blogSort === 'new') {
+      items.sort(function (a, b) { return String(b.postdate || '').localeCompare(String(a.postdate || '')); });
+    }
+
+    var posts = items.map(function (p, i) {
+      var link = String(p.link || '');
+      return '<li class="post">' +
+        '<span class="rank" aria-hidden="true">' + (i + 1) + '</span>' +
+        '<div class="body">' +
+          '<a class="title" href="' + esc(link) + '" target="_blank" rel="noopener noreferrer">' + esc(p.title) + '</a>' +
+          (p.description ? '<p class="desc">' + esc(p.description) + '</p>' : '') +
+          '<div class="meta">' +
+            '<span>' + esc(p.bloggername || '블로그') + '</span>' +
+            '<span class="dash">·</span><span>' + esc(formatDate(p.postdate)) + '</span>' +
+            '<button type="button" class="copy" data-copy="' + esc(link) + '">링크 복사</button>' +
+          '</div>' +
+        '</div>' +
+      '</li>';
+    }).join('');
+
+    var total = Number(state.blog.total);
+    blogBody.innerHTML =
+      '<p class="blog-sum">블로그 문서 <b>' + (isFinite(total) ? fmt(total) : '-') + '</b>건 · ' +
+        '<span>상위 ' + items.length + '건</span></p>' +
+      '<div class="list-head" style="margin-top:0"><h3>검색 결과</h3>' +
+        '<div class="seg" role="group" aria-label="정렬">' +
+          '<button type="button" data-blog-sort="sim" class="' + (state.blogSort === 'sim' ? 'on' : '') + '">정확도순</button>' +
+          '<button type="button" data-blog-sort="new" class="' + (state.blogSort === 'new' ? 'on' : '') + '">최신순</button>' +
+        '</div>' +
+      '</div>' +
+      '<ul class="blog-list">' + posts + '</ul>';
+  }
+
+  /* ---------- search ---------- */
+  function fetchJSON(url, ms) {
+    var ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    var timer = setTimeout(function () { if (ctrl) ctrl.abort(); }, ms || 15000);
+    return fetch(url, { signal: ctrl ? ctrl.signal : undefined, headers: { Accept: 'application/json' } })
+      .then(function (r) {
+        return r.json().catch(function () { return {}; }).then(function (data) {
+          if (!r.ok) {
+            var detail = data && data.detail ? String(data.detail).replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 160) : '';
+            var msg = (data && data.error) ? data.error : ('요청이 실패했어요 (HTTP ' + r.status + ')');
+            throw new Error(detail ? msg + ' — ' + detail : msg);
+          }
+          return data;
+        });
+      })
+      .catch(function (e) {
+        if (e && (e.name === 'AbortError')) throw new Error('응답이 너무 늦어요. 잠시 후 다시 시도해 주세요.');
+        if (e && e.message === 'Failed to fetch') throw new Error('네트워크에 연결하지 못했어요. 연결을 확인해 주세요.');
+        throw e;
+      })
+      .finally(function () { clearTimeout(timer); });
+  }
+
+  function setBusy(b) {
+    goBtn.disabled = b;
+    goBtn.textContent = b ? '찾는 중' : '검색';
+  }
+
+  function updateLinks(q) {
+    $('#adLink').href = 'https://searchad.naver.com';
+    $('#blogLink').href = 'https://search.naver.com/search.naver?where=blog&query=' + encodeURIComponent(q);
+  }
+
+  function scrollToResults() {
+    if (!results.hidden && window.innerWidth < 900) {
+      var y = results.getBoundingClientRect().top + window.pageYOffset - 74;
+      if (window.pageYOffset < y - 40) window.scrollTo({ top: y, behavior: 'smooth' });
+    }
+  }
+
+  function search(rawQ, opts) {
+    opts = opts || {};
+    var q = norm(rawQ);
+    if (!q) {
+      input.focus();
+      toast('키워드를 입력해 주세요');
+      return;
+    }
+    if (q.length > 60) q = q.slice(0, 60);
+    var sameQ = keyOf(state.q) === keyOf(q);
+    state.q = q;
+    input.value = q;
+    clearBtn.hidden = false;
+    saveRecent(q);
+    renderChips();
+
+    try {
+      var u = new URL(window.location.href);
+      u.searchParams.set('q', q);
+      window.history.replaceState(null, '', u.pathname + '?' + u.searchParams.toString());
+    } catch (e) {}
+
+    guide.hidden = true;
+    results.hidden = false;
+    updateLinks(q);
+
+    state.ad = null; state.blog = null; state.adErr = null; state.blogErr = null;
+    if (!sameQ) { state.adSort = 'rel'; state.blogSort = 'sim'; }
+    state.adLoading = true; state.blogLoading = true;
+    setBusy(true);
+    renderAd(); renderBlog();
+    if (!opts.noScroll) scrollToResults();
+
+    var seq = ++searchSeq;
+    var adP = fetchJSON('/api/keyword-tool?keyword=' + encodeURIComponent(q))
+      .then(function (d) { return { ok: true, d: d }; })
+      .catch(function (e) { return { ok: false, e: e }; });
+    var blogP = fetchJSON('/api/blog-search?query=' + encodeURIComponent(q))
+      .then(function (d) { return { ok: true, d: d }; })
+      .catch(function (e) { return { ok: false, e: e }; });
+
+    adP.then(function (r) {
+      if (seq !== searchSeq) return;
+      state.adLoading = false;
+      if (r.ok) { state.ad = r.d; state.adErr = null; }
+      else { state.adErr = '검색량을 불러오지 못했어요. ' + (r.e.message || ''); }
+      renderAd();
+      checkBusy();
+    });
+
+    blogP.then(function (r) {
+      if (seq !== searchSeq) return;
+      state.blogLoading = false;
+      if (r.ok) { state.blog = r.d; state.blogErr = null; }
+      else { state.blogErr = '블로그 결과를 불러오지 못했어요. ' + (r.e.message || ''); }
+      renderBlog();
+      checkBusy();
+    });
+  }
+
+  var searchSeq = 0;
+  function checkBusy() {
+    if (!state.adLoading && !state.blogLoading) setBusy(false);
+  }
+
+  /* ---------- events ---------- */
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    search(input.value);
+  });
+  input.addEventListener('input', function () {
+    clearBtn.hidden = !input.value;
+  });
+  clearBtn.addEventListener('click', function () {
+    input.value = '';
+    clearBtn.hidden = true;
+    input.focus();
+  });
+
+  document.addEventListener('click', function (e) {
+    var t = e.target;
+
+    var tryBtn = t.closest('[data-try]');
+    if (tryBtn) { search(tryBtn.getAttribute('data-try')); return; }
+
+    var removeBtn = t.closest('[data-remove]');
+    if (removeBtn) {
+      e.stopPropagation();
+      removeRecent(removeBtn.getAttribute('data-remove'));
+      return;
+    }
+    if (t.closest('[data-clearall]')) { clearRecent(); return; }
+
+    var chip = t.closest('.chip[data-kw]');
+    if (chip) { search(chip.getAttribute('data-kw')); return; }
+
+    var kw = t.closest('.kw[data-kw]');
+    if (kw) {
+      var k = kw.getAttribute('data-kw');
+      if (k && keyOf(k) !== keyOf(state.q)) { search(k); }
+      return;
+    }
+
+    var copyBtn = t.closest('[data-copy]');
+    if (copyBtn) {
+      var link = copyBtn.getAttribute('data-copy');
+      copyText(link).then(function () {
+        copyBtn.classList.add('done');
+        copyBtn.textContent = '복사됨';
+        toast('링크를 복사했어요');
+        setTimeout(function () { copyBtn.classList.remove('done'); copyBtn.textContent = '링크 복사'; }, 1800);
+      }).catch(function () { toast('복사하지 못했어요. 길게 눌러 복사해 주세요'); });
+      return;
+    }
+
+    var retry = t.closest('[data-retry]');
+    if (retry) {
+      if (retry.getAttribute('data-retry') === 'ad') {
+        state.adLoading = true; state.adErr = null; renderAd(); checkBusy(); setBusy(true);
+        var mySeq = ++searchSeq;
+        fetchJSON('/api/keyword-tool?keyword=' + encodeURIComponent(state.q))
+          .then(function (d) { if (mySeq !== searchSeq) return; state.adLoading = false; state.ad = d; renderAd(); checkBusy(); })
+          .catch(function (er) { if (mySeq !== searchSeq) return; state.adLoading = false; state.adErr = '검색량을 불러오지 못했어요. ' + (er.message || ''); renderAd(); checkBusy(); });
+      } else {
+        state.blogLoading = true; state.blogErr = null; renderBlog(); checkBusy(); setBusy(true);
+        var mySeq2 = ++searchSeq;
+        fetchJSON('/api/blog-search?query=' + encodeURIComponent(state.q))
+          .then(function (d) { if (mySeq2 !== searchSeq) return; state.blogLoading = false; state.blog = d; renderBlog(); checkBusy(); })
+          .catch(function (er) { if (mySeq2 !== searchSeq) return; state.blogLoading = false; state.blogErr = '블로그 결과를 불러오지 못했어요. ' + (er.message || ''); renderBlog(); checkBusy(); });
+      }
+      return;
+    }
+
+    var adSort = t.closest('[data-ad-sort]');
+    if (adSort) { state.adSort = adSort.getAttribute('data-ad-sort'); renderAd(); return; }
+
+    var blogSort = t.closest('[data-blog-sort]');
+    if (blogSort) { state.blogSort = blogSort.getAttribute('data-blog-sort'); renderBlog(); return; }
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    var kw = e.target.closest && e.target.closest('.kw[data-kw]');
+    if (kw) {
+      e.preventDefault();
+      var k = kw.getAttribute('data-kw');
+      if (k && keyOf(k) !== keyOf(state.q)) search(k);
+    }
+  });
+
+  // sticky 그림자
+  var bar = $('#stickyBar');
+  var onScroll = function () {
+    bar.classList.toggle('stuck', window.pageYOffset > 8);
+  };
+  window.addEventListener('scroll', onScroll, { passive: true });
+
+  /* ---------- boot ---------- */
+  renderChips();
+  var params = new URLSearchParams(window.location.search);
+  var initial = params.get('q') || params.get('keyword') || params.get('query');
+  if (initial && norm(initial)) {
+    input.value = norm(initial);
+    clearBtn.hidden = false;
+    search(initial, { noScroll: true });
+  } else {
+    input.focus({ preventScroll: true });
+  }
+})();
+</script>
+</body>
+</html>
