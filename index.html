@@ -184,6 +184,14 @@ main{padding-bottom:56px}
 .kw .nums b{display:block;font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-0.02em}
 .kw .nums span{display:block;font-size:10.5px;color:#9b958c;font-variant-numeric:tabular-nums;letter-spacing:-0.01em}
 .kw .badge{flex:0 0 auto;min-width:34px;text-align:center}
+@media(max-width:430px){
+  .kw{flex-wrap:wrap;gap:2px 8px;padding-top:10px;padding-bottom:10px}
+  .kw .name{flex:1 1 auto}
+  .kw .badge{order:2}
+  .kw .nums{order:3;flex:1 0 100%;text-align:left;display:flex;align-items:baseline;gap:7px;margin-top:1px}
+  .kw .nums b{display:inline}
+  .kw .nums span{display:inline}
+}
 @media(max-width:380px){.kw .nums span{font-size:10px}}
 
 /* blog list */
