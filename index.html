@@ -341,6 +341,7 @@ footer a:hover{color:var(--accent-ink)}
 
   var state = {
     q: '',
+    adLookup: '',
     ad: null, blog: null,
     adErr: null, blogErr: null,
     adLoading: false, blogLoading: false,
@@ -478,6 +479,19 @@ footer a:hover{color:var(--accent-ink)}
       '<div class="sk sk-post"></div><div class="sk sk-post"></div><div class="sk sk-post"></div>' +
       '<div class="sk sk-post"></div><div class="sk sk-post"></div>';
   }
+  function adErrorText(e) {
+    var m = String((e && e.message) || '');
+    if (/11001|hintKeywords/.test(m)) {
+      return '네이버 검색광고가 이 키워드를 조회하지 못했어요. 띄어쓰기를 바꾸거나 다른 키워드로 확인해 주세요.';
+    }
+    return '검색량을 불러오지 못했어요. ' + m;
+  }
+  function blogErrorText(e) {
+    var m = String((e && e.message) || '');
+    if (/HTML|Unexpected token/.test(m)) return '블로그 결과를 읽지 못했어요. 잠시 후 다시 시도해 주세요.';
+    return '블로그 결과를 불러오지 못했어요. ' + m;
+  }
+
   function errBlock(msg, kind) {
     return '<div class="err"><span class="ico" aria-hidden="true">!</span><div><p>' + esc(msg) + '</p>' +
       '<button type="button" class="retry" data-retry="' + kind + '">다시 시도</button></div></div>';
@@ -506,6 +520,10 @@ footer a:hover{color:var(--accent-ink)}
     }
 
     var main = items.filter(function (x) { return x.main; })[0] || items[0];
+    var shownQ = state.q || main.keyword;
+    var lookupNote = norm(shownQ) !== norm(main.keyword)
+      ? '<br>검색량은 <b>' + esc(main.keyword) + '</b>로 조회했어요 (검색광고 키워드도구는 띄어쓰기 없이 조회돼요).'
+      : '';
     var moRatio = main.total.n > 0 ? Math.round(main.mo.n / main.total.n * 100) : 0;
 
     var list = items.slice();
@@ -527,7 +545,7 @@ footer a:hover{color:var(--accent-ink)}
 
     adBody.innerHTML =
       '<div class="hero">' +
-        '<span class="label"><b>' + esc(main.keyword) + '</b> 월간 검색 합계</span>' +
+        '<span class="label"><b>' + esc(shownQ) + '</b> 월간 검색 합계</span>' +
         '<div class="num">' + (main.total.low ? '<span class="approx">약</span>' : '') +
           '<strong>' + fmt(main.total.n) + '</strong><i>회</i></div>' +
         '<div class="split">' +
@@ -544,7 +562,7 @@ footer a:hover{color:var(--accent-ink)}
         '</div>' +
       '</div>' +
       '<ul class="kw-list">' + rows + '</ul>' +
-      '<p class="note">10 미만 값은 10으로 계산해 합계를 냈어요. 키워드를 누르면 그 키워드로 다시 검색합니다.</p>';
+      '<p class="note">10 미만 값은 10으로 계산해 합계를 냈어요. 키워드를 누르면 그 키워드로 다시 검색합니다.' + lookupNote + '</p>';
   }
 
   /* ---------- render: blog card ---------- */
@@ -658,6 +676,7 @@ footer a:hover{color:var(--accent-ink)}
     updateLinks(q);
 
     state.ad = null; state.blog = null; state.adErr = null; state.blogErr = null;
+    state.adLookup = q.replace(/\s+/g, '');
     if (!sameQ) { state.adSort = 'rel'; state.blogSort = 'sim'; }
     state.adLoading = true; state.blogLoading = true;
     setBusy(true);
@@ -665,7 +684,7 @@ footer a:hover{color:var(--accent-ink)}
     if (!opts.noScroll) scrollToResults();
 
     var seq = ++searchSeq;
-    var adP = fetchJSON('/api/keyword-tool?keyword=' + encodeURIComponent(q))
+    var adP = fetchJSON('/api/keyword-tool?keyword=' + encodeURIComponent(state.adLookup))
       .then(function (d) { return { ok: true, d: d }; })
       .catch(function (e) { return { ok: false, e: e }; });
     var blogP = fetchJSON('/api/blog-search?query=' + encodeURIComponent(q))
@@ -676,7 +695,7 @@ footer a:hover{color:var(--accent-ink)}
       if (seq !== searchSeq) return;
       state.adLoading = false;
       if (r.ok) { state.ad = r.d; state.adErr = null; }
-      else { state.adErr = '검색량을 불러오지 못했어요. ' + (r.e.message || ''); }
+      else { state.adErr = adErrorText(r.e); }
       renderAd();
       checkBusy();
     });
@@ -685,7 +704,7 @@ footer a:hover{color:var(--accent-ink)}
       if (seq !== searchSeq) return;
       state.blogLoading = false;
       if (r.ok) { state.blog = r.d; state.blogErr = null; }
-      else { state.blogErr = '블로그 결과를 불러오지 못했어요. ' + (r.e.message || ''); }
+      else { state.blogErr = blogErrorText(r.e); }
       renderBlog();
       checkBusy();
     });
@@ -751,15 +770,15 @@ footer a:hover{color:var(--accent-ink)}
       if (retry.getAttribute('data-retry') === 'ad') {
         state.adLoading = true; state.adErr = null; renderAd(); checkBusy(); setBusy(true);
         var mySeq = ++searchSeq;
-        fetchJSON('/api/keyword-tool?keyword=' + encodeURIComponent(state.q))
+        fetchJSON('/api/keyword-tool?keyword=' + encodeURIComponent(state.adLookup || state.q.replace(/\s+/g, '')))
           .then(function (d) { if (mySeq !== searchSeq) return; state.adLoading = false; state.ad = d; renderAd(); checkBusy(); })
-          .catch(function (er) { if (mySeq !== searchSeq) return; state.adLoading = false; state.adErr = '검색량을 불러오지 못했어요. ' + (er.message || ''); renderAd(); checkBusy(); });
+          .catch(function (er) { if (mySeq !== searchSeq) return; state.adLoading = false; state.adErr = adErrorText(er); renderAd(); checkBusy(); });
       } else {
         state.blogLoading = true; state.blogErr = null; renderBlog(); checkBusy(); setBusy(true);
         var mySeq2 = ++searchSeq;
         fetchJSON('/api/blog-search?query=' + encodeURIComponent(state.q))
           .then(function (d) { if (mySeq2 !== searchSeq) return; state.blogLoading = false; state.blog = d; renderBlog(); checkBusy(); })
-          .catch(function (er) { if (mySeq2 !== searchSeq) return; state.blogLoading = false; state.blogErr = '블로그 결과를 불러오지 못했어요. ' + (er.message || ''); renderBlog(); checkBusy(); });
+          .catch(function (er) { if (mySeq2 !== searchSeq) return; state.blogLoading = false; state.blogErr = blogErrorText(er); renderBlog(); checkBusy(); });
       }
       return;
     }
