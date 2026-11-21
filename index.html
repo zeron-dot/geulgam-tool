@@ -149,6 +149,8 @@ main{padding-bottom:56px}
 .hero .num strong{font-size:32px;font-weight:800;letter-spacing:-0.04em;line-height:1.15;font-variant-numeric:tabular-nums}
 .hero .num i{font-style:normal;font-size:13px;color:var(--muted);font-weight:600}
 .hero .num .approx{font-size:15px;font-weight:700;color:var(--muted);margin-right:-2px}
+.hero-note{margin:9px 0 0;font-size:11px;line-height:1.5;color:#7d8f8a}
+.hero-note b{color:var(--accent-ink);font-weight:700}
 .split{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;margin-top:10px}
 .split .cell{background:#fff;border:1px solid var(--line-2);border-radius:10px;padding:8px 10px}
 .split .cell span{display:block;font-size:11px;color:var(--muted);font-weight:600}
@@ -376,6 +378,15 @@ footer a:hover{color:var(--accent-ink)}
     return fmt(n);
   }
   function norm(s) { return String(s == null ? '' : s).replace(/\s+/g, ' ').trim(); }
+  // 네이버 응답의 HTML 엔티티(&quot; 등)를 글자로
+  function plain(s) {
+    return String(s == null ? '' : s)
+      .replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"').replace(/&#0?39;|&apos;/g, "'")
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&#(\d+);/g, function (m, d) { return String.fromCharCode(Number(d)); })
+      .replace(/&amp;/g, '&');
+  }
   function keyOf(s) { return norm(s).replace(/\s+/g, '').toLowerCase(); }
 
   // 검색광고 응답의 "< 10" 같은 값을 숫자로
@@ -521,7 +532,7 @@ footer a:hover{color:var(--accent-ink)}
       var mo = searchNum(it.mobileSearch);
       var t = sumOf(pc, mo);
       return {
-        keyword: String(it.keyword || '').trim(),
+        keyword: plain(it.keyword).trim(),
         pc: pc, mo: mo, total: t,
         competition: it.competition,
         main: keyOf(it.keyword) === keyOf(state.ad.keyword || state.q)
@@ -536,7 +547,7 @@ footer a:hover{color:var(--accent-ink)}
     var main = items.filter(function (x) { return x.main; })[0] || items[0];
     var shownQ = state.q || main.keyword;
     var lookupNote = norm(shownQ) !== norm(main.keyword)
-      ? '<br>검색량은 <b>' + esc(main.keyword) + '</b> 기준이에요 (네이버 키워드도구는 띄어쓰기 없이 조회됩니다).'
+      ? '<p class="hero-note">검색량은 <b>' + esc(main.keyword) + '</b> 기준이에요. 네이버 키워드도구는 띄어쓰기 없이 조회됩니다.</p>'
       : '';
     var moRatio = main.total.n > 0 ? Math.round(main.mo.n / main.total.n * 100) : 0;
 
@@ -568,6 +579,7 @@ footer a:hover{color:var(--accent-ink)}
           '<div class="cell comp"><span>경쟁도</span><span class="badge ' + compClass(main.competition) + '">' + esc(compLabel(main.competition)) + '</span></div>' +
         '</div>' +
         '<div class="ratio"><div class="bar"><i style="width:' + moRatio + '%"></i></div><em>모바일 ' + moRatio + '%</em></div>' +
+        lookupNote +
       '</div>' +
       '<div class="list-head"><h3>연관 키워드<span class="count">' + items.length + '</span></h3>' +
         '<div class="seg" role="group" aria-label="정렬">' +
@@ -576,7 +588,7 @@ footer a:hover{color:var(--accent-ink)}
         '</div>' +
       '</div>' +
       '<ul class="kw-list">' + rows + '</ul>' +
-      '<p class="note">10 미만 값은 10으로 계산해 합계를 냈어요. 키워드를 누르면 그 키워드로 다시 검색합니다.' + lookupNote + '</p>';
+      '<p class="note">10 미만 값은 10으로 계산해 합계를 냈어요. 키워드를 누르면 그 키워드로 다시 검색합니다.</p>';
   }
 
   /* ---------- render: blog card ---------- */
@@ -596,13 +608,14 @@ footer a:hover{color:var(--accent-ink)}
 
     var posts = items.map(function (p, i) {
       var link = String(p.link || '');
+      var pTitle = plain(p.title), pDesc = plain(p.description), pName = plain(p.bloggername || '블로그');
       return '<li class="post">' +
         '<span class="rank" aria-hidden="true">' + (i + 1) + '</span>' +
         '<div class="body">' +
-          '<a class="title" href="' + esc(link) + '" target="_blank" rel="noopener noreferrer" title="' + esc(p.title) + '">' + esc(p.title) + '</a>' +
-          (p.description ? '<p class="desc">' + esc(p.description) + '</p>' : '') +
+          '<a class="title" href="' + esc(link) + '" target="_blank" rel="noopener noreferrer" title="' + esc(pTitle) + '">' + esc(pTitle) + '</a>' +
+          (pDesc ? '<p class="desc">' + esc(pDesc) + '</p>' : '') +
           '<div class="meta">' +
-            '<span class="bname">' + esc(p.bloggername || '블로그') + '</span>' +
+            '<span class="bname">' + esc(pName) + '</span>' +
             '<span class="dash">·</span><span>' + esc(formatDate(p.postdate)) + '</span>' +
             '<button type="button" class="copy" data-copy="' + esc(link) + '">링크 복사</button>' +
           '</div>' +
